@@ -206,6 +206,7 @@ min_caml_truncate:
 	ret
 .globl min_caml_float_of_int
 min_caml_float_of_int:
+	sarl	$1, %eax
 	cvtsi2sd	%eax, %xmm0
 	ret
 .globl min_caml_cos
