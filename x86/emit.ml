@@ -24,9 +24,11 @@ let locate x =
 let offset x = 4 * List.hd (locate x)
 let stacksize () = align (List.length !stackmap * 4)
 
+let ocamlint i = ((i lsl 1) lor 1)
+
 let pp_id_or_imm = function
   | V(x) -> x
-  | C(i) -> "$" ^ string_of_int i
+  | C(i) -> "$" ^ string_of_int (ocamlint i)
 
 (* 関数呼び出しのために引数を並べ替える(register shuffling) (caml2html: emit_shuffle) *)
 let rec shuffle sw xys =
@@ -52,29 +54,45 @@ let rec g oc = function (* 命令列のアセンブリ生成 (caml2html: emit_g) *)
 and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
   (* 末尾でなかったら計算結果をdestにセット (caml2html: emit_nontail) *)
   | NonTail(_), Nop -> ()
-  | NonTail(x), Set(i) -> Printf.fprintf oc "\tmovl\t$%d, %s\n" i x
+  | NonTail(x), Set(i) -> Printf.fprintf oc "\tmovl\t$%d, %s\n" (ocamlint i) x
   | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tmovl\t$%s, %s\n" y x
   | NonTail(x), Mov(y) ->
       if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x
   | NonTail(x), Neg(y) ->
       if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
-      Printf.fprintf oc "\tnegl\t%s\n" x
+      (Printf.fprintf oc "\tnegl\t%s\n" x;
+       Printf.fprintf oc "\taddl\t$2, %s\n" x)
+  | NonTail(x), Add(y, C(z)) when y = reg_hp ->
+      (if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
+       Printf.fprintf oc "\taddl\t$%d, %s\n" z x)
   | NonTail(x), Add(y, z') ->
       if V(x) = z' then
-        Printf.fprintf oc "\taddl\t%s, %s\n" y x
+        (Printf.fprintf oc "\taddl\t%s, %s\n" y x;
+        Printf.fprintf oc "\tdecl\t%s\n" x)
       else
         (if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
-         Printf.fprintf oc "\taddl\t%s, %s\n" (pp_id_or_imm z') x)
+         match z' with
+         | V(z) ->
+             (Printf.fprintf oc "\taddl\t%s, %s\n" z x;
+              Printf.fprintf oc "\tdecl\t%s\n" x)
+         | C(z) -> Printf.fprintf oc "\taddl\t$%d, %s\n" (z lsl 1) x)
   | NonTail(x), Sub(y, z') ->
       if V(x) = z' then
         (Printf.fprintf oc "\tsubl\t%s, %s\n" y x;
-         Printf.fprintf oc "\tnegl\t%s\n" x)
+         Printf.fprintf oc "\tnegl\t%s\n" x;
+         Printf.fprintf oc "\tincl\t%s\n" x)
       else
         (if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
-         Printf.fprintf oc "\tsubl\t%s, %s\n" (pp_id_or_imm z') x)
-  | NonTail(x), Ld(y, V(z), i) -> Printf.fprintf oc "\tmovl\t(%s,%s,%d), %s\n" y z i x
+         match z' with
+         | V(z) ->
+             (Printf.fprintf oc "\tsubl\t%s, %s\n" z x;
+              Printf.fprintf oc "\tincl\t%s\n" x)
+         | C(z) -> Printf.fprintf oc "\tsubl\t$%d, %s\n" (z lsl 1) x)
+  | NonTail(x), Ld(y, V(z), i) when i mod 2 = 0 -> Printf.fprintf oc "\tmovl\t%d(%s,%s,%d), %s\n" (~-(i / 2)) y z (i / 2) x
+  | NonTail(x), Ld(y, V(z), i) -> assert false
   | NonTail(x), Ld(y, C(j), i) -> Printf.fprintf oc "\tmovl\t%d(%s), %s\n" (j * i) y x
-  | NonTail(_), St(x, y, V(z), i) -> Printf.fprintf oc "\tmovl\t%s, (%s,%s,%d)\n" x y z i
+  | NonTail(_), St(x, y, V(z), i) when i mod 2 = 0 -> Printf.fprintf oc "\tmovl\t%s, %d(%s,%s,%d)\n" x (~-(i / 2)) y z (i / 2)
+  | NonTail(_), St(x, y, V(z), i) -> assert false
   | NonTail(_), St(x, y, C(j), i) -> Printf.fprintf oc "\tmovl\t%s, %d(%s)\n" x (j * i) y
   | NonTail(x), FMovD(y) ->
       if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x
@@ -111,9 +129,11 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
       else
         (if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x;
          Printf.fprintf oc "\tdivsd\t%s, %s\n" z x)
-  | NonTail(x), LdDF(y, V(z), i) -> Printf.fprintf oc "\tmovsd\t(%s,%s,%d), %s\n" y z i x
+  | NonTail(x), LdDF(y, V(z), i) when i mod 2 = 0 -> Printf.fprintf oc "\tmovsd\t%d(%s,%s,%d), %s\n" (~-(i / 2)) y z (i / 2) x
+  | NonTail(x), LdDF(y, V(z), i) -> assert false
   | NonTail(x), LdDF(y, C(j), i) -> Printf.fprintf oc "\tmovsd\t%d(%s), %s\n" (j * i) y x
-  | NonTail(_), StDF(x, y, V(z), i) -> Printf.fprintf oc "\tmovsd\t%s, (%s,%s,%d)\n" x y z i
+  | NonTail(_), StDF(x, y, V(z), i) when i mod 2 = 0 -> Printf.fprintf oc "\tmovsd\t%s, %d(%s,%s,%d)\n" x (~-(i / 2)) y z (i / 2)
+  | NonTail(_), StDF(x, y, V(z), i) -> assert false
   | NonTail(_), StDF(x, y, C(j), i) -> Printf.fprintf oc "\tmovsd\t%s, %d(%s)\n" x (j * i) y
   | NonTail(_), Comment(s) -> Printf.fprintf oc "\t# %s\n" s
   (* 退避の仮想命令の実装 (caml2html: emit_save) *)

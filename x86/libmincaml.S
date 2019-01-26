@@ -29,6 +29,7 @@ min_caml_print_newline:
 min_caml_print_int:
 	pushl	%ebp
 	movl	%esp, %ebp
+	sarl	$1, %eax
 	ALIGNSTACK2
 	pushl	%eax
 	pushl	$format_int
@@ -40,6 +41,7 @@ min_caml_print_int:
 min_caml_print_byte:
 	pushl	%ebp
 	movl	%esp, %ebp
+	sarl	$1, %eax
 	ALIGNSTACK1
 	pushl	%eax
 	call	U(putchar)
@@ -50,6 +52,7 @@ min_caml_print_byte:
 min_caml_prerr_int:
 	pushl	%ebp
 	movl	%esp, %ebp
+	sarl	$1, %eax
 	ALIGNSTACK3
 	pushl	%eax
 	pushl	$format_int
@@ -62,6 +65,7 @@ min_caml_prerr_int:
 min_caml_prerr_byte:
 	pushl	%ebp
 	movl	%esp, %ebp
+	sarl	$1, %eax
 	ALIGNSTACK2
 	pushl	U(min_caml_stderr)
 	pushl	%eax
@@ -93,6 +97,8 @@ min_caml_read_int:
 	pushl	$format_int
 	call	U(scanf)
 	movl	-4(%ebp), %eax
+	shll	$1, %eax
+	orl	$1, %eax
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
@@ -116,6 +122,7 @@ min_caml_create_array:
 	movl	%esp, %ebp
 	pushl	%ecx
 	pushl	%edx
+	sarl	$1, %eax
 	movl	%eax, %ecx
 	movl	min_caml_hp, %eax
 	movl	%ecx, %edx
@@ -140,6 +147,7 @@ min_caml_create_float_array:
 	movl	%esp, %ebp
 	pushl	%ecx
 	pushl	%edx
+	sarl	$1, %eax
 	movl	%eax, %ecx
 	movl	min_caml_hp, %eax
 	movl	%ecx, %edx
@@ -193,6 +201,8 @@ min_caml_int_of_float:
 .globl min_caml_truncate
 min_caml_truncate:
 	cvttsd2si	%xmm0, %eax
+	shll	$1, %eax
+	orl	$1, %eax
 	ret
 .globl min_caml_float_of_int
 min_caml_float_of_int:
@@ -257,5 +267,5 @@ min_caml_fnegd:
 	.long	0
 	.long	0
 .globl min_caml_hp
-min_caml_hp:	
+min_caml_hp:
 	.long	0x0

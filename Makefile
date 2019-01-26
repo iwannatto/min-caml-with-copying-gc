@@ -1,5 +1,5 @@
 # Sumii's Makefile for Min-Caml (for GNU Make)
-# 
+#
 # ack.mlなどのテストプログラムをtest/に用意してmake do_testを実行すると、
 # min-camlとocamlでコンパイル・実行した結果を自動で比較します。
 
@@ -34,11 +34,17 @@ shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
 join-reg join-reg2 non-tail-if non-tail-if2 \
 inprod inprod-rec inprod-loop matmul matmul-flat \
 manyargs
+TESTS2 = read-int print-byte
+TESTS3 = prerr-int prerr-byte prerr-float
 
-do_test: $(TESTS:%=test/%.cmp)
+do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) $(TESTS3:%=test3/%.cmp)
 
-.PRECIOUS: test/%.s test/% test/%.res test/%.ans test/%.cmp
-TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
+.PRECIOUS: test/%.s test/% test/%.res test/%.ans test/%.cmp \
+	test2/%.s test2/% test2/%.res test2/%.cmp \
+	test3/%.s test3/% test3/%.res test3/%.cmp
+TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp) \
+	$(TESTS2:%=test2/%.s) $(TESTS2:%=test2/%) $(TESTS2:%=test2/%.res) $(TESTS2:%=test2/%.cmp) \
+	$(TESTS3:%=test3/%.s) $(TESTS3:%=test3/%) $(TESTS3:%=test3/%.res) $(TESTS3:%=test3/%.cmp)
 
 test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
@@ -49,6 +55,26 @@ test/%.res: test/%
 test/%.ans: test/%.ml
 	ocaml $< > $@
 test/%.cmp: test/%.res test/%.ans
+	diff $^ > $@
+
+test2/%.s: $(RESULT) test2/%.ml
+	./$(RESULT) test2/$*
+test2/%: test2/%.s libmincaml.S stub.c
+	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
+test2/%.res: test2/%
+	$< < test2/$*.in > $@
+test2/%.cmp: test2/%.res test2/%.ans
+	diff $^ > $@
+
+test3/%.s: $(RESULT) test3/%.ml
+	./$(RESULT) test3/$*
+test3/%: test3/%.s libmincaml.S stub.c
+	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
+test3/%.res: test3/%
+	$< < test3/$*.in 2> $@_
+	sed -e '1d' $@_ > $@
+	rm $@_
+test3/%.cmp: test3/%.res test3/%.ans
 	diff $^ > $@
 
 min-caml.html: main.mli main.ml id.ml m.ml s.ml \
