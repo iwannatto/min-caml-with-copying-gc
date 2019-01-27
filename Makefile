@@ -35,7 +35,7 @@ join-reg join-reg2 non-tail-if non-tail-if2 \
 inprod inprod-rec inprod-loop matmul matmul-flat \
 manyargs
 TESTS2 = read-int print-byte
-TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float
+TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float tuple-float
 
 do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) $(TESTS3:%=test3/%.cmp)
 
@@ -44,7 +44,14 @@ do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) $(TESTS3:%=test3/%.cmp)
 	test3/%.s test3/% test3/%.res test3/%.cmp
 TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp) \
 	$(TESTS2:%=test2/%.s) $(TESTS2:%=test2/%) $(TESTS2:%=test2/%.res) $(TESTS2:%=test2/%.cmp) \
-	$(TESTS3:%=test3/%.s) $(TESTS3:%=test3/%) $(TESTS3:%=test3/%.res) $(TESTS3:%=test3/%.cmp)
+	$(TESTS3:%=test3/%.s) $(TESTS3:%=test3/%) $(TESTS3:%=test3/%.res) $(TESTS3:%=test3/%.cmp) \
+	minitest.s minitest
+
+.PHONY: minitest
+minitest: $(RESULT) minitest.ml libmincaml.S stub.c
+	./$(RESULT) minitest
+	$(CC) $(CFLAGS) -m32 minitest.s libmincaml.S stub.c -lm -o $@
+	./minitest
 
 test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*

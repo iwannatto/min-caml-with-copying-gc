@@ -251,11 +251,10 @@ min_caml_atan:
 .globl float_malloc
 float_malloc:
 	movl	min_caml_hp, %eax
-	movl	$1277, (%eax) # 1024(2 word) + 253(float)
-	movsd	%xmm0, 4(%eax)
-	addl	$12, %eax
-	movl	%eax, min_caml_hp
-	subl	$8, %eax
+	addl	$12, min_caml_hp
+	movl	$1277, (%eax) # 1024 (2 word) + 253 (float)
+	addl	$4, %eax
+	movsd	%xmm0, (%eax)
 	ret
 .data
 format_int:

@@ -12,9 +12,10 @@ let save x =
 let savef x =
   stackset := S.add x !stackset;
   if not (List.mem x !stackmap) then
-    (let pad =
+    stackmap := !stackmap @ [x]
+    (* (let pad =
       if List.length !stackmap mod 2 = 0 then [] else [Id.gentmp Type.Int] in
-    stackmap := !stackmap @ pad @ [x; x])
+    stackmap := !stackmap @ pad @ [x; x]) *)
 let locate x =
   let rec loc = function
     | [] -> []
@@ -142,14 +143,24 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
       Printf.fprintf oc "\tmovl\t%s, %d(%s)\n" x (offset y) reg_sp
   | NonTail(_), Save(x, y) when List.mem x allfregs && not (S.mem y !stackset) ->
       savef y;
-      Printf.fprintf oc "\tmovsd\t%s, %d(%s)\n" x (offset y) reg_sp
+      Printf.fprintf oc "\tpushl\t%%eax\n";
+      Printf.fprintf oc "\tmovl\t%s, %%eax\n" reg_hp;
+      Printf.fprintf oc "\taddl\t$12, %s\n" reg_hp;
+      Printf.fprintf oc "\tmovl\t$1277, (%%eax) # 1024 (2 word) + 253 (float)\n";
+      Printf.fprintf oc "\taddl\t$4, %%eax\n";
+      Printf.fprintf oc "\tmovsd\t%s, (%%eax)\n" x;
+      Printf.fprintf oc "\tmovl\t%%eax, %d(%s)\n" (offset y) reg_sp;
+      Printf.fprintf oc "\tpopl\t%%eax\n";
   | NonTail(_), Save(x, y) -> assert (S.mem y !stackset); ()
   (* 復帰の仮想命令の実装 (caml2html: emit_restore) *)
   | NonTail(x), Restore(y) when List.mem x allregs ->
       Printf.fprintf oc "\tmovl\t%d(%s), %s\n" (offset y) reg_sp x
   | NonTail(x), Restore(y) ->
       assert (List.mem x allfregs);
-      Printf.fprintf oc "\tmovsd\t%d(%s), %s\n" (offset y) reg_sp x
+      Printf.fprintf oc "\tpushl\t%%eax\n";
+      Printf.fprintf oc "\tmovl\t%d(%s), %%eax\n" (offset y) reg_sp;
+      Printf.fprintf oc "\tmovsd\t(%%eax), %s\n" x;
+      Printf.fprintf oc "\tpopl\t%%eax\n"
   (* 末尾だったら計算結果を第一レジスタにセットしてret (caml2html: emit_tailret) *)
   | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ as exp) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
