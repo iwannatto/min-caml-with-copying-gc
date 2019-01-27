@@ -125,9 +125,14 @@ min_caml_create_array:
 	sarl	$1, %eax
 	movl	%eax, %ecx
 	movl	min_caml_hp, %eax
+	addl	$4, %eax
 	movl	%ecx, %edx
+	incl	%edx
 	shll	$2, %edx
 	addl	%edx, min_caml_hp
+	subl	$4, %edx
+	shll	$8, %edx
+	movl	%edx, -4(%eax) # header
 create_array_loop:
 	cmpl	$0, %ecx
 	jne	create_array_cont
@@ -150,9 +155,15 @@ min_caml_create_float_array:
 	sarl	$1, %eax
 	movl	%eax, %ecx
 	movl	min_caml_hp, %eax
+	addl	$4, %eax
 	movl	%ecx, %edx
+	incl	%edx
 	shll	$3, %edx
 	addl	%edx, min_caml_hp
+	subl	$8, %edx
+	shll	$8, %edx
+	addl	$254, %edx
+	movl	%edx, -4(%eax) # header
 create_float_array_loop:
 	cmpl	$0, %ecx
 	jne	create_float_array_cont
