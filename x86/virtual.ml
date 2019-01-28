@@ -84,12 +84,11 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
             let z = Id.gentmp Type.Int in
             Let((z, Type.Int), CallDir(Id.L("float_malloc"), [], [y]), seq(St(z, x, C(offset), 1), store_fv)))
           (fun y _ offset store_fv -> seq(St(y, x, C(offset), 1), store_fv)) in
-      Let((x, t), Mov(reg_hp),
-          Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)),
-              let z = Id.genid "l" in
-              Let((z, Type.Int), SetL(l),
-                  seq(St(z, x, C(0), 1),
-                      store_fv))))
+      let a = Id.gentmp Type.Int in
+      let z = Id.genid "l" in
+      Let((a, Type.Int), Set(offset / 4),
+           Let((z, Type.Int), SetL(l),
+               Let((x, t), CallDir(Id.L("closure_malloc"), [a; z], []), store_fv)))
   | Closure.AppCls(x, ys) ->
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
       Ans(CallCls(x, int, float))

@@ -13,9 +13,6 @@ let savef x =
   stackset := S.add x !stackset;
   if not (List.mem x !stackmap) then
     stackmap := !stackmap @ [x]
-    (* (let pad =
-      if List.length !stackmap mod 2 = 0 then [] else [Id.gentmp Type.Int] in
-    stackmap := !stackmap @ pad @ [x; x]) *)
 let locate x =
   let rec loc = function
     | [] -> []

@@ -267,6 +267,21 @@ float_malloc:
 	addl	$4, %eax
 	movsd	%xmm0, (%eax)
 	ret
+.globl closure_malloc
+closure_malloc:
+	sarl	$1, %eax
+	movl	%eax, %ecx
+	movl	min_caml_hp, %eax
+	addl	$4, %eax
+	movl	%ecx, %edx
+	shll	$10, %edx
+	addl	$247, %edx # 247 is closure tag
+	movl	%edx, -4(%eax)
+	movl	%ebx, (%eax)
+	incl	%ecx
+	shll	$2, %ecx
+	addl	%ecx, min_caml_hp
+	ret
 .data
 format_int:
 	.asciz	"%d"
