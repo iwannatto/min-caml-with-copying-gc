@@ -261,6 +261,7 @@ min_caml_atan:
 	ret
 .globl float_malloc
 float_malloc:
+	call	gc
 	movl	min_caml_hp, %eax
 	addl	$12, min_caml_hp
 	movl	$1277, (%eax) # 1024 (2 word) + 253 (float)
@@ -317,3 +318,6 @@ min_caml_fnegd:
 .globl min_caml_hp
 min_caml_hp:
 	.long	0x0
+.globl min_caml_hend
+min_caml_hend:
+	.long 0x0

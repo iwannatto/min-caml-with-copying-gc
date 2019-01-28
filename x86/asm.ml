@@ -53,6 +53,7 @@ let reg_fsw = fregs.(Array.length fregs - 1) (* temporary for swap *)
 *)
 let reg_sp = "%ebp" (* stack pointer *)
 let reg_hp = "min_caml_hp" (* heap pointer (caml2html: sparcasm_reghp) *)
+let reg_hend = "min_caml_hend"
 (* let reg_ra = "%eax" (* return address *) *)
 let is_reg x = (x.[0] = '%' || x = reg_hp)
 

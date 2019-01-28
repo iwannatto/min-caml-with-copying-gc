@@ -48,14 +48,14 @@ TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=te
 	minitest.s minitest
 
 .PHONY: minitest
-minitest: $(RESULT) minitest.ml libmincaml.S stub.c
+minitest: $(RESULT) minitest.ml libmincaml.S stub.c gc.c
 	./$(RESULT) minitest
-	$(CC) $(CFLAGS) -m32 minitest.s libmincaml.S stub.c -lm -o $@
+	$(CC) $(CFLAGS) -m32 minitest.s libmincaml.S stub.c gc.c -lm -o $@
 	./minitest
 
 test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
-test/%: test/%.s libmincaml.S stub.c
+test/%: test/%.s libmincaml.S stub.c gc.c
 	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
 test/%.res: test/%
 	$< > $@
@@ -66,7 +66,7 @@ test/%.cmp: test/%.res test/%.ans
 
 test2/%.s: $(RESULT) test2/%.ml
 	./$(RESULT) test2/$*
-test2/%: test2/%.s libmincaml.S stub.c
+test2/%: test2/%.s libmincaml.S stub.c gc.c
 	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
 test2/%.res: test2/%
 	$< < test2/$*.in > $@
@@ -75,7 +75,7 @@ test2/%.cmp: test2/%.res test2/%.ans
 
 test3/%.s: $(RESULT) test3/%.ml
 	./$(RESULT) test3/$*
-test3/%: test3/%.s libmincaml.S stub.c
+test3/%: test3/%.s libmincaml.S stub.c gc.c
 	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
 test3/%.res: test3/%
 	$< < test3/$*.in 2> $@_

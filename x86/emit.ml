@@ -304,6 +304,8 @@ let f oc (Prog(data, fundefs, e)) =
   Printf.fprintf oc "\tmovl\t32(%%esp),%s\n" reg_sp;
   Printf.fprintf oc "\tmovl\t36(%%esp),%s\n" regs.(0);
   Printf.fprintf oc "\tmovl\t%s,%s\n" regs.(0) reg_hp;
+  Printf.fprintf oc "\tmovl\t40(%%esp),%s\n" regs.(0);
+  Printf.fprintf oc "\tmovl\t%s,%s\n" regs.(0) reg_hend;
   stackset := S.empty;
   stackmap := [];
   g oc (NonTail(regs.(0)), e);
