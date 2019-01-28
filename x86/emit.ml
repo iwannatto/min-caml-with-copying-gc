@@ -60,9 +60,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
       if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
       (Printf.fprintf oc "\tnegl\t%s\n" x;
        Printf.fprintf oc "\taddl\t$2, %s\n" x)
-  | NonTail(x), Add(y, C(z)) when y = reg_hp ->
-      (if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x;
-       Printf.fprintf oc "\taddl\t$%d, %s\n" z x)
+  | NonTail(x), Add(y, C(z)) when y = reg_hp -> assert false
   | NonTail(x), Add(y, z') ->
       if V(x) = z' then
         (Printf.fprintf oc "\taddl\t%s, %s\n" y x;
