@@ -10,5 +10,10 @@ FILE *min_caml_stderr;
 void gc() {
   min_caml_stderr = stderr;
   fprintf(stderr, "gc\n");
+}
+
+void gc_fail() {
+  min_caml_stderr = stderr;
+  fprintf(stderr, "gc_fail\n");
   exit(0);
 }

@@ -261,41 +261,77 @@ min_caml_atan:
 	ret
 .globl float_malloc
 float_malloc:
-	call	gc
 	movl	min_caml_hp, %eax
-	addl	$12, min_caml_hp
-	movl	$1277, (%eax) # 1024 (2 word) + 253 (float)
-	addl	$4, %eax
+	addl	$12, %eax
+	cmpl	min_caml_hend, %eax
+	ja	float_malloc_call_gc
+float_malloc_cont:
+	movl	%eax, min_caml_hp
+	subl	$8, %eax
+	movl	$1277, -4(%eax) # 1024 (2 word) + 253 (float)
 	movsd	%xmm0, (%eax)
 	ret
+float_malloc_call_gc:
+	call	gc
+	movl	min_caml_hp, %eax
+	addl	$12, %eax
+	cmpl	min_caml_hend, %eax
+	jbe	float_malloc_cont
+	call	gc_fail
 .globl closure_malloc
 closure_malloc:
-	sarl	$1, %eax
+	shrl	$1, %eax
 	movl	%eax, %ecx
-	movl	min_caml_hp, %eax
-	addl	$4, %eax
 	movl	%ecx, %edx
+	movl	min_caml_hp, %eax
+	incl	%ecx
+	shll	$2, %ecx
+	addl	%eax, %ecx
+	cmpl	min_caml_hend, %ecx
+	ja	closure_malloc_call_gc
+closure_malloc_cont:
+	movl	%ecx, min_caml_hp
+	addl	$4, %eax
 	shll	$10, %edx
 	addl	$247, %edx # 247 is closure tag
 	movl	%edx, -4(%eax)
 	movl	%ebx, (%eax)
+	ret
+closure_malloc_call_gc:
+	call	gc
+	movl	%edx, %ecx
+	movl	min_caml_hp, %eax
 	incl	%ecx
 	shll	$2, %ecx
-	addl	%ecx, min_caml_hp
-	ret
+	addl	%eax, %ecx
+	cmpl	min_caml_hend, %ecx
+	jbe	closure_malloc_cont
+	call	gc_fail
 .globl tuple_malloc
 tuple_malloc:
-	sarl	$1, %eax
+	shrl	$1, %eax
 	movl	%eax, %ebx
-	movl	min_caml_hp, %eax
-	addl	$4, %eax
 	movl	%ebx, %ecx
+	movl	min_caml_hp, %eax
+	shll	$2, %ebx
+	addl	%eax, %ebx
+	cmpl	min_caml_hend, %ebx
+	ja	tuple_malloc_call_gc
+tuple_malloc_cont:
+	movl	%ebx, min_caml_hp
+	addl	$4, %eax
 	shll	$10, %ecx
 	movl	%ecx, -4(%eax)
-	incl	%ebx
-	shll	$2, %ebx
-	addl	%ebx, min_caml_hp
 	ret
+tuple_malloc_call_gc:
+	call	gc
+	movl	%ecx, %ebx
+	movl	min_caml_hp, %eax
+	shll	$2, %ebx
+	addl	%eax, %ebx
+	cmpl	min_caml_hend, %ebx
+	jbe	tuple_malloc_cont
+	call	gc_fail
 .data
 format_int:
 	.asciz	"%d"

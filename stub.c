@@ -14,7 +14,7 @@ int main() {
   int hsize = 4000000;
 
   min_caml_stderr = stderr;
-  sp = alloca(1000000); hp = malloc(hsize);
+  sp = alloca(8000000); hp = malloc(hsize);
   hend = hp + (hsize / 2);
   if (hp == NULL || sp == NULL) {
     fprintf(stderr, "malloc or alloca failed\n");
