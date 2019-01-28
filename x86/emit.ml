@@ -138,8 +138,14 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
       Printf.fprintf oc "\tmovl\t%s, %d(%s)\n" x (offset y) reg_sp
   | NonTail(_), Save(x, y) when List.mem x allfregs && not (S.mem y !stackset) ->
       savef y;
+      let l = Id.genid "savecont" in
       Printf.fprintf oc "\tpushl\t%%eax\n";
       Printf.fprintf oc "\tmovl\t%s, %%eax\n" reg_hp;
+      Printf.fprintf oc "\taddl\t$12, %%eax\n";
+      Printf.fprintf oc "\tcmp\t%s, %%eax\n" reg_hend;
+      Printf.fprintf oc "\tjbe\t%s\n" l;
+      Printf.fprintf oc "\tcall\tgc\n";
+      Printf.fprintf oc "%s:\n" l;
       Printf.fprintf oc "\taddl\t$12, %s\n" reg_hp;
       Printf.fprintf oc "\tmovl\t$1277, (%%eax) # 1024 (2 word) + 253 (float)\n";
       Printf.fprintf oc "\taddl\t$4, %%eax\n";
