@@ -88,7 +88,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
       let z = Id.genid "l" in
       Let((a, Type.Int), Set(offset / 4),
            Let((z, Type.Int), SetL(l),
-               Let((x, t), CallDir(Id.L("closure_malloc"), [a; z], []), store_fv)))
+               Let((x, t), CallDir(Id.L("closure_malloc"), [a; z], []),
+                   store_fv)))
   | Closure.AppCls(x, ys) ->
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
       Ans(CallCls(x, int, float))
@@ -106,8 +107,9 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
             Let((z, Type.Int), CallDir(Id.L("float_malloc"), [], [x]),
                 seq(St(z, y, C(offset), 1), store)))
           (fun x _ offset store -> seq(St(x, y, C(offset), 1), store)) in
-      Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Mov(reg_hp),
-          Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)),
+      let z = Id.gentmp Type.Int in
+      Let((z, Type.Int), Set(offset / 4),
+          Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), CallDir(Id.L("tuple_malloc"), [z], []),
               store))
   | Closure.LetTuple(xts, y, e2) ->
       let s = Closure.fv e2 in

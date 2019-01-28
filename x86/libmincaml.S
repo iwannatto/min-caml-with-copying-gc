@@ -282,6 +282,19 @@ closure_malloc:
 	shll	$2, %ecx
 	addl	%ecx, min_caml_hp
 	ret
+.globl tuple_malloc
+tuple_malloc:
+	sarl	$1, %eax
+	movl	%eax, %ebx
+	movl	min_caml_hp, %eax
+	addl	$4, %eax
+	movl	%ebx, %ecx
+	shll	$10, %ecx
+	movl	%ecx, -4(%eax)
+	incl	%ebx
+	shll	$2, %ebx
+	addl	%ebx, min_caml_hp
+	ret
 .data
 format_int:
 	.asciz	"%d"
