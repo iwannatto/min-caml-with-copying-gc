@@ -33,12 +33,12 @@ adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
 shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
 join-reg join-reg2 non-tail-if non-tail-if2 \
 inprod inprod-rec inprod-loop matmul matmul-flat \
-manyargs
+manyargs inprod-rec-int
 TESTS2 = read-int print-byte
-TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float tuple-float
+# TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float tuple-float
 TESTSGC = cls-float-malloc
 
-do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) $(TESTS3:%=test3/%.cmp)
+do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) # $(TESTS3:%=test3/%.cmp)
 
 do_gctest: $(TESTSGC:%=testgc/%.cmp)
 
@@ -54,9 +54,9 @@ do_minitest: $(RESULT) minitest.ml libmincaml.S stub.c gc.c
 	minitest.s minitest
 TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp) \
 	$(TESTS2:%=test2/%.s) $(TESTS2:%=test2/%) $(TESTS2:%=test2/%.res) $(TESTS2:%=test2/%.cmp) \
-	$(TESTS3:%=test3/%.s) $(TESTS3:%=test3/%) $(TESTS3:%=test3/%.res) $(TESTS3:%=test3/%.cmp) \
 	$(TESTSGC:%=testgc/%.s) $(TESTSGC:%=testgc/%) $(TESTSGC:%=testgc/%.res) $(TESTSGC:%=testgc/%.cmp) \
 	minitest.s minitest
+	# $(TESTS3:%=test3/%.s) $(TESTS3:%=test3/%) $(TESTS3:%=test3/%.res) $(TESTS3:%=test3/%.cmp) \
 
 test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
@@ -78,27 +78,27 @@ test2/%.res: test2/% test2/%.in
 test2/%.cmp: test2/%.res test2/%.ans
 	diff $^ > $@
 
-test3/%.s: $(RESULT) test3/%.ml
-	./$(RESULT) test3/$*
-test3/%: test3/%.s libmincaml.S stub.c gc.c
-	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
-test3/%.res: test3/% test3/%.in
-	$< < test3/$*.in 2> $@_
-	sed -e '1d' $@_ > $@
-	rm $@_
-test3/%.cmp: test3/%.res test3/%.ans
-	diff $^ > $@
-
-testgc/%.s: $(RESULT) testgc/%.ml
-	./$(RESULT) testgc/$*
-testgc/%: testgc/%.s libmincaml.S stub.c gc.c
-	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
-testgc/%.res: testgc/% testgc/%.in
-	$< < testgc/$*.in 2> $@_
-	sed -e '1d' $@_ > $@
-	rm $@_
-testgc/%.cmp: testgc/%.res testgc/%.ans
-	diff $^ > $@
+# test3/%.s: $(RESULT) test3/%.ml
+# 	./$(RESULT) test3/$*
+# test3/%: test3/%.s libmincaml.S stub.c gc.c
+# 	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
+# test3/%.res: test3/% test3/%.in
+# 	$< < test3/$*.in 2> $@_
+# 	sed -e '1d' $@_ > $@
+# 	rm $@_
+# test3/%.cmp: test3/%.res test3/%.ans
+# 	diff $^ > $@
+#
+# testgc/%.s: $(RESULT) testgc/%.ml
+# 	./$(RESULT) testgc/$*
+# testgc/%: testgc/%.s libmincaml.S stub.c gc.c
+# 	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
+# testgc/%.res: testgc/% testgc/%.in
+# 	$< < testgc/$*.in 2> $@_
+# 	sed -e '1d' $@_ > $@
+# 	rm $@_
+# testgc/%.cmp: testgc/%.res testgc/%.ans
+# 	diff $^ > $@
 
 min-caml.html: main.mli main.ml id.ml m.ml s.ml \
 		syntax.ml type.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \

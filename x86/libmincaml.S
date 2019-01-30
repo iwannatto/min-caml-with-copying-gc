@@ -124,14 +124,17 @@ min_caml_create_array:
 	pushl	%edx
 	sarl	$1, %eax
 	movl	%eax, %ecx
+	movl	%ecx, %edx
+	shll	$2, %edx
 	movl	min_caml_hp, %eax
 	addl	$4, %eax
+	addl	%eax, %edx
+	cmpl	min_caml_hend, %edx
+	ja	create_array_call_gc
+create_array_gc_cont:
+	movl	%edx, min_caml_hp
 	movl	%ecx, %edx
-	incl	%edx
-	shll	$2, %edx
-	addl	%edx, min_caml_hp
-	subl	$4, %edx
-	shll	$8, %edx
+	shll	$10, %edx
 	movl	%edx, -4(%eax) # header
 create_array_loop:
 	cmpl	$0, %ecx
@@ -146,22 +149,49 @@ create_array_cont:
 	decl	%ecx
 	movl	%ebx, (%eax,%ecx,4)
 	jmp	create_array_loop
+create_array_call_gc:
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ebp
+	movl	%esp, stack_tmp
+	ALIGNSTACK0
+	call	gc
+	movl	stack_tmp, %esp
+	popl	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	movl	%ecx, %edx
+	shll	$2, %edx
+	movl	min_caml_hp, %eax
+	addl	$4, %eax
+	addl	%eax, %edx
+	cmpl	min_caml_hend, %edx
+	jbe	create_array_gc_cont
+	call	gc_fail
 .globl min_caml_create_float_array
 min_caml_create_float_array:
+	movl	%ebp, min_caml_stop
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ecx
 	pushl	%edx
 	sarl	$1, %eax
 	movl	%eax, %ecx
+	movl	%ecx, %edx
+	shll	$3, %edx
 	movl	min_caml_hp, %eax
 	addl	$4, %eax
+	addl	%eax, %edx
+	cmpl	min_caml_hend, %edx
+	ja	create_float_array_call_gc
+create_float_array_gc_cont:
+	movl	%edx, min_caml_hp
 	movl	%ecx, %edx
-	incl	%edx
-	shll	$3, %edx
-	addl	%edx, min_caml_hp
-	subl	$8, %edx
-	shll	$8, %edx
+	shll	$11, %edx
 	addl	$254, %edx
 	movl	%edx, -4(%eax) # header
 create_float_array_loop:
@@ -177,6 +207,29 @@ create_float_array_cont:
 	decl	%ecx
 	movsd	%xmm0, (%eax,%ecx,8)
 	jmp	create_float_array_loop
+create_float_array_call_gc:
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ebp
+	movl	%esp, stack_tmp
+	ALIGNSTACK0
+	call	gc
+	movl	stack_tmp, %esp
+	popl	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	movl	%ecx, %edx
+	shll	$3, %edx
+	movl	min_caml_hp, %eax
+	addl	$4, %eax
+	addl	%eax, %edx
+	cmpl	min_caml_hend, %edx
+	jbe	create_float_array_gc_cont
+	call	gc_fail
 .globl min_caml_abs_float
 min_caml_abs_float:
 	pushl	%ebp
@@ -268,11 +321,25 @@ float_malloc:
 float_malloc_cont:
 	movl	%eax, min_caml_hp
 	subl	$8, %eax
-	movl	$1277, -4(%eax) # 1024 (2 word) + 253 (float)
+	movl	$2301, -4(%eax) # 2048 (2 word) + 253 (float)
 	movsd	%xmm0, (%eax)
 	ret
 float_malloc_call_gc:
+	movl	%ebp, min_caml_stop
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ebp
+	movl	%esp, stack_tmp
+	ALIGNSTACK0
 	call	gc
+	movl	stack_tmp, %esp
+	popl	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
 	movl	min_caml_hp, %eax
 	addl	$12, %eax
 	cmpl	min_caml_hend, %eax
@@ -298,7 +365,22 @@ closure_malloc_cont:
 	movl	%ebx, (%eax)
 	ret
 closure_malloc_call_gc:
+	movl	%ebp, min_caml_stop
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ebp
+	movl	%esp, stack_tmp
+	ALIGNSTACK0
+#	andl	$0xfffffff0, %esp
 	call	gc
+	movl	stack_tmp, %esp
+	popl	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
 	movl	%edx, %ecx
 	movl	min_caml_hp, %eax
 	incl	%ecx
@@ -324,7 +406,21 @@ tuple_malloc_cont:
 	movl	%ecx, -4(%eax)
 	ret
 tuple_malloc_call_gc:
+	movl	%ebp, min_caml_stop
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ebp
+	movl	%esp, stack_tmp
+	ALIGNSTACK0
 	call	gc
+	movl	stack_tmp, %esp
+	popl	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
 	movl	%ecx, %ebx
 	movl	min_caml_hp, %eax
 	shll	$2, %ebx
@@ -351,9 +447,27 @@ min_caml_fnegd:
 	.long	0x80000000
 	.long	0
 	.long	0
+.globl min_caml_hbase
+min_caml_hbase:
+	.long 0x0
 .globl min_caml_hp
 min_caml_hp:
 	.long	0x0
 .globl min_caml_hend
 min_caml_hend:
+	.long 0x0
+.globl min_caml_next_hbase
+min_caml_next_hbase:
+	.long 0x0
+.globl min_caml_next_hend
+min_caml_next_hend:
+	.long 0x0
+.globl min_caml_sbase
+min_caml_sbase:
+	.long 0x0
+.globl min_caml_stop
+min_caml_stop:
+	.long 0x0
+.globl stack_tmp
+stack_tmp:
 	.long 0x0

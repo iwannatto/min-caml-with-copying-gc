@@ -137,21 +137,38 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
       save y;
       Printf.fprintf oc "\tmovl\t%s, %d(%s)\n" x (offset y) reg_sp
   | NonTail(_), Save(x, y) when List.mem x allfregs && not (S.mem y !stackset) ->
-      savef y;
       let l = Id.genid "savecont" in
       Printf.fprintf oc "\tpushl\t%%eax\n";
       Printf.fprintf oc "\tmovl\t%s, %%eax\n" reg_hp;
       Printf.fprintf oc "\taddl\t$12, %%eax\n";
       Printf.fprintf oc "\tcmp\t%s, %%eax\n" reg_hend;
       Printf.fprintf oc "\tjbe\t%s\n" l;
+      Printf.fprintf oc "\tmovl\t%s, %s\n" reg_sp reg_stop;
+      Printf.fprintf oc "\taddl\t$%d, %s\n" (List.length !stackmap * 4) reg_stop;
+      Printf.fprintf oc "\tpushl\t%%eax\n";
+      Printf.fprintf oc "\tpushl\t%%ebx\n";
+      Printf.fprintf oc "\tpushl\t%%ecx\n";
+      Printf.fprintf oc "\tpushl\t%%edx\n";
+      Printf.fprintf oc "\tpushl\t%%ebp\n";
+      Printf.fprintf oc "\tmovl\t%%esp, %s\n" reg_stack_tmp;
+      Printf.fprintf oc "\tandl\t$0xfffffff0, %esp\n";
       Printf.fprintf oc "\tcall\tgc\n";
+      Printf.fprintf oc "\tmovl\t%s, %%esp\n" reg_stack_tmp;
+      Printf.fprintf oc "\tpopl\t%%ebp\n";
+      Printf.fprintf oc "\tpopl\t%%edx\n";
+      Printf.fprintf oc "\tpopl\t%%ecx\n";
+      Printf.fprintf oc "\tpopl\t%%ebx\n";
+      Printf.fprintf oc "\tpopl\t%%eax\n";
+      Printf.fprintf oc "\tmovl\t%s, %%eax\n" reg_hp;
+      Printf.fprintf oc "\taddl\t$12, %%eax\n";
+      savef y;
       Printf.fprintf oc "%s:\n" l;
       Printf.fprintf oc "\taddl\t$12, %s\n" reg_hp;
-      Printf.fprintf oc "\tmovl\t$1277, (%%eax) # 1024 (2 word) + 253 (float)\n";
-      Printf.fprintf oc "\taddl\t$4, %%eax\n";
+      Printf.fprintf oc "\tsubl\t$8, %%eax\n";
+      Printf.fprintf oc "\tmovl\t$2301, -4(%%eax) # 2048 (2 word) + 253 (float)\n";
       Printf.fprintf oc "\tmovsd\t%s, (%%eax)\n" x;
       Printf.fprintf oc "\tmovl\t%%eax, %d(%s)\n" (offset y) reg_sp;
-      Printf.fprintf oc "\tpopl\t%%eax\n";
+      Printf.fprintf oc "\tpopl\t%%eax\n"
   | NonTail(_), Save(x, y) -> assert (S.mem y !stackset); ()
   (* 復帰の仮想命令の実装 (caml2html: emit_restore) *)
   | NonTail(x), Restore(y) when List.mem x allregs ->
@@ -310,8 +327,8 @@ let f oc (Prog(data, fundefs, e)) =
   Printf.fprintf oc "\tmovl\t32(%%esp),%s\n" reg_sp;
   Printf.fprintf oc "\tmovl\t36(%%esp),%s\n" regs.(0);
   Printf.fprintf oc "\tmovl\t%s,%s\n" regs.(0) reg_hp;
-  Printf.fprintf oc "\tmovl\t40(%%esp),%s\n" regs.(0);
-  Printf.fprintf oc "\tmovl\t%s,%s\n" regs.(0) reg_hend;
+  (* Printf.fprintf oc "\tmovl\t40(%%esp),%s\n" regs.(0); *)
+  (* Printf.fprintf oc "\tmovl\t%s,%s\n" regs.(0) reg_hend; *)
   stackset := S.empty;
   stackmap := [];
   g oc (NonTail(regs.(0)), e);
