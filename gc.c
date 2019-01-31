@@ -37,7 +37,6 @@ void table_insert(int *old_p, int *new_p, int *table[TABLE_N][2]) {
 }
 
 void copy(int **hpp, int **old_pp, int *table[TABLE_N][2]) {
-  fprintf(stderr, "copy\n");
   int header = *(*old_pp - 1);
   int size = SIZE_IN_HEADER(header);
 
@@ -46,11 +45,9 @@ void copy(int **hpp, int **old_pp, int *table[TABLE_N][2]) {
 
   int *old_p = *old_pp;
   *old_pp = new_p;
-  fprintf(stderr, "*%p = %p\n", old_pp, new_p);
   table_insert(old_p, new_p, table);
 
   *(new_p - 1) = header;
-  // fprintf(stderr, "%x\n", header);
   if (IS_ZEROTAG(header) || IS_CLOSURETAG(header)) {
     for (int i = 0; i < size; ++i) {
       *(new_p + i) = *(old_p + i);
@@ -67,7 +64,6 @@ void copy(int **hpp, int **old_pp, int *table[TABLE_N][2]) {
   } else if (IS_DOUBLETAG(header)) {
     *(double*)new_p = *(double*)old_p;
   } else if (IS_DOUBLE_ARRAY_TAG(header)) {
-    fprintf(stderr, "%p <- %p\n", new_p, old_p);
     for (int i = 0; i < (size / 2); ++i) {
       *((double*)new_p + i) = *((double*)old_p + i);
     }
@@ -75,8 +71,6 @@ void copy(int **hpp, int **old_pp, int *table[TABLE_N][2]) {
 }
 
 void gc() {
-  fprintf(stderr, "gc\n");
-
   int *hp = (int*)min_caml_next_hbase;
   int *(*table)[2];
   table = malloc(sizeof(int*) * TABLE_N * 2);
