@@ -8,6 +8,7 @@ let int_a = Array.make 10 a in
 let float_a = Array.make 50 b in
 prerr_int int_a.(0); prerr_byte 10;
 prerr_float float_a.(0); prerr_byte 10;
-let c = read_float_0 () +. 1000.0 in
-do_nothing t;
-prerr_int (f (int_of_float c)); prerr_byte 10
+let tt = (a, a) in
+prerr_int a; prerr_byte 10;
+let (aa, aaa) = tt in
+prerr_int (f aa); prerr_byte 10

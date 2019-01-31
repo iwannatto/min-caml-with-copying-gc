@@ -433,7 +433,7 @@ min_caml_do_nothing:
 	ret
 .globl min_caml_read_int_0
 min_caml_read_int_0:
-	movl	$0, %eax
+	movl	$1, %eax
 	ret
 .globl min_caml_read_float_0
 min_caml_read_float_0:
