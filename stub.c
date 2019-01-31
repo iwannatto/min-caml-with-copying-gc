@@ -12,7 +12,8 @@ FILE *min_caml_stderr;
 
 int main() {
   char *hp, *sp;
-  int hsize = 4000000;
+  // int hsize = 4000000;
+  int hsize = 4 * 0x200;
 
   min_caml_stderr = stderr;
   sp = alloca(1000000); hp = malloc(hsize);
@@ -23,7 +24,7 @@ int main() {
   fprintf(stderr, "sp = %p, hp = %p\n", sp, hp);
 
   min_caml_hbase = hp;
-  min_caml_hend = hp + 0x20;
+  min_caml_hend = hp + (hsize / 2);
   min_caml_next_hbase = min_caml_hend;
   min_caml_next_hend = hp + hsize;
   min_caml_sbase = sp;
