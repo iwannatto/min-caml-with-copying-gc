@@ -13,7 +13,7 @@ FILE *min_caml_stderr;
 int main() {
   char *hp, *sp;
   // int hsize = 4000000;
-  int hsize = 4 * 0x200;
+  int hsize = 4 * 200;
 
   min_caml_stderr = stderr;
   sp = alloca(1000000); hp = malloc(hsize);
