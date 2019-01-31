@@ -395,13 +395,13 @@ tuple_malloc:
 	movl	%eax, %ebx
 	movl	%ebx, %ecx
 	movl	min_caml_hp, %eax
+	addl	$4, %eax
 	shll	$2, %ebx
 	addl	%eax, %ebx
 	cmpl	min_caml_hend, %ebx
 	ja	tuple_malloc_call_gc
 tuple_malloc_cont:
 	movl	%ebx, min_caml_hp
-	addl	$4, %eax
 	shll	$10, %ecx
 	movl	%ecx, -4(%eax)
 	ret
@@ -428,6 +428,18 @@ tuple_malloc_call_gc:
 	cmpl	min_caml_hend, %ebx
 	jbe	tuple_malloc_cont
 	call	gc_fail
+.globl min_caml_do_nothing
+min_caml_do_nothing:
+	ret
+.globl min_caml_read_int_0
+min_caml_read_int_0:
+	movl	$0, %eax
+	ret
+.globl min_caml_read_float_0
+min_caml_read_float_0:
+	movl	$float_0, %eax
+	movsd	(%eax), %xmm0
+	ret
 .data
 format_int:
 	.asciz	"%d"

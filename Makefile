@@ -35,7 +35,8 @@ join-reg join-reg2 non-tail-if non-tail-if2 \
 inprod inprod-rec inprod-loop matmul matmul-flat \
 manyargs inprod-rec-int
 TESTS2 = read-int print-byte
-TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float tuple-float
+TESTS3 = prerr-int prerr-byte prerr-float float-of-int cls-float tuple-float \
+gc-base gc-savefloat
 
 do_test: $(TESTS:%=test/%.cmp) $(TESTS2:%=test2/%.cmp) $(TESTS3:%=test3/%.cmp)
 
