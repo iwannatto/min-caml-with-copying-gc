@@ -5,8 +5,9 @@ prerr_int (f 100); prerr_byte 10;
 let t = (a, b) in
 do_nothing t;
 let int_a = Array.make 10 a in
-let float_a = Array.make 10 b in
+let float_a = Array.make 35 b in
 prerr_int int_a.(0); prerr_byte 10;
 prerr_float float_a.(0); prerr_byte 10;
 let c = read_float_0 () +. 1000.0 in
+do_nothing t;
 prerr_int (f (int_of_float c)); prerr_byte 10
